@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KR-Lib UI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: transparent; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+        }
+
+        .notification {
+            background: rgba(15, 15, 30, 0.95);
+            border-radius: 8px;
+            padding: 14px 20px;
+            min-width: 280px;
+            max-width: 380px;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(420px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .progress-container {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-container.active {
+            display: flex;
+        }
+
+        .progress-circle {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .progress-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle .bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 4;
+        }
+
+        .progress-circle .progress {
+            fill: none;
+            stroke: #4cc9f0;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 163;
+            stroke-dashoffset: 163;
+            transition: stroke-dashoffset linear;
+        }
+
+        .progress-label {
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 6px 16px;
+            border-radius: 4px;
+        }
+
+        .textui-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: none;
+        }
+
+        .textui-container.active {
+            display: block;
+        }
+
+        .textui {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            display: none;
+            background: rgba(15, 15, 30, 0.95);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .menu-container.active {
+            display: block;
+        }
+
+        .menu-title {
+            color: #ffcc00;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-item {
+            padding: 10px 15px;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .menu-item:hover {
+            background: rgba(100, 150, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-container" id="notifications"></div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-circle">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+                <circle class="bg" cx="30" cy="30" r="26"></circle>
+                <circle class="progress" id="progressBar" cx="30" cy="30" r="26"></circle>
+            </svg>
+        </div>
+        <div class="progress-label" id="progressLabel">Working...</div>
+    </div>
+
+    <div class="textui-container" id="textuiContainer">
+        <div class="textui" id="textuiContent"></div>
+    </div>
+
+    <div class="menu-container" id="menuContainer">
+        <div class="menu-title" id="menuTitle">Menu</div>
+        <div id="menuItems"></div>
+    </div>
+
+    <script>
+        const notifications = [];
+
+        window.addEventListener('message', function(event) {
+            const data = event.data;
+
+            switch (data.action) {
+                case 'krNotify':
+                    showNotification(data.message, data.color, data.icon, data.duration);
+                    break;
+                case 'progressCircle':
+                    showProgress(data.duration, data.label);
+                    break;
+                case 'hideProgress':
+                    hideProgress();
+                    break;
+                case 'showTextUI':
+                    showTextUI(data.text);
+                    break;
+                case 'hideTextUI':
+                    hideTextUI();
+                    break;
+                case 'openMenu':
+                    openMenu(data.menuType, data.data);
+                    break;
+                case 'closeMenu':
+                    closeMenu();
+                    break;
+            }
+        });
+
+        function showNotification(message, color, icon, duration) {
+            const container = document.getElementById('notifications');
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+
+            notif.innerHTML =
+                '<div class="notification-icon" style="background: ' + color + '">' + icon + '</div>' +
+                '<div class="notification-content">' + message + '</div>';
+
+            container.appendChild(notif);
+
+            requestAnimationFrame(function() {
+                notif.classList.add('show');
+            });
+
+            setTimeout(function() {
+                notif.classList.remove('show');
+                setTimeout(function() {
+                    if (notif.parentNode) {
+                        notif.parentNode.removeChild(notif);
+                    }
+                }, 300);
+            }, duration || 3000);
+        }
+
+        function showProgress(duration, label) {
+            const container = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressLabel = document.getElementById('progressLabel');
+
+            container.classList.add('active');
+            progressLabel.textContent = label || 'Working...';
+
+            progressBar.style.transitionDuration = duration + 'ms';
+            progressBar.style.strokeDashoffset = '0';
+
+            setTimeout(function() {
+                hideProgress();
+            }, duration);
+        }
+
+        function hideProgress() {
+            const container = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+
+            container.classList.remove('active');
+            progressBar.style.transitionDuration = '0ms';
+            progressBar.style.strokeDashoffset = '163';
+        }
+
+        function showTextUI(text) {
+            const container = document.getElementById('textuiContainer');
+            const content = document.getElementById('textuiContent');
+
+            content.textContent = text;
+            container.classList.add('active');
+        }
+
+        function hideTextUI() {
+            document.getElementById('textuiContainer').classList.remove('active');
+        }
+
+        function openMenu(type, data) {
+            const container = document.getElementById('menuContainer');
+            const title = document.getElementById('menuTitle');
+            const items = document.getElementById('menuItems');
+
+            title.textContent = data.title || 'Menu';
+            items.innerHTML = '';
+
+            if (data.items) {
+                data.items.forEach(function(item) {
+                    const div = document.createElement('div');
+                    div.className = 'menu-item';
+                    div.textContent = item.label;
+                    div.onclick = function() {
+                        fetch('https://' + GetParentResourceName() + '/menuSelect', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ item: item })
+                        });
+                    };
+                    items.appendChild(div);
+                });
+            }
+
+            container.classList.add('active');
+        }
+
+        function closeMenu() {
+            document.getElementById('menuContainer').classList.remove('active');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMenu();
+                hideTextUI();
+            }
+        });
+    </script>
+</body>
+</html>

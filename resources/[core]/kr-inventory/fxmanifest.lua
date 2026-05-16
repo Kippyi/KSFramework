@@ -6,7 +6,7 @@ description 'KR Inventory - Item Management System'
 version '1.1.0'
 
 shared_scripts {
-    '@ox_lib/init.lua'
+    '@kr-lib/shared/main.lua'
 }
 
 server_scripts {
@@ -19,7 +19,7 @@ client_scripts {
 }
 
 dependencies {
+    'kr-lib',
     'kr-core',
-    'ox_lib',
     'mysql-async'
 }

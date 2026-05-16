@@ -6,7 +6,7 @@ description 'KR Characters - Housing, Properties, Blips'
 version '1.1.0'
 
 shared_scripts {
-    '@ox_lib/init.lua'
+    '@kr-lib/shared/main.lua'
 }
 
 server_scripts {
@@ -20,7 +20,7 @@ client_scripts {
 }
 
 dependencies {
+    'kr-lib',
     'kr-core',
-    'ox_lib',
     'mysql-async'
 }

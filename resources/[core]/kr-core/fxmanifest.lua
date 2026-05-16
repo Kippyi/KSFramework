@@ -6,7 +6,7 @@ description 'KR Core - Economy, Banking, Jobs, Character Management'
 version '1.1.0'
 
 shared_scripts {
-    '@ox_lib/init.lua',
+    '@kr-lib/shared/main.lua',
     'shared/config.lua'
 }
 
@@ -28,6 +28,6 @@ files {
 }
 
 dependencies {
-    'ox_lib',
+    'kr-lib',
     'mysql-async'
 }

@@ -33,7 +33,7 @@ KSFramework/
 ## Requirements
 
 - [mysql-async](https://github.com/MyRevolution/mysql-async)
-- [ox_lib](https://github.com/overextended/ox_lib)
+- [kr-lib](resources/[core]/kr-lib/) (built-in custom utility library)
 - MySQL database
 
 ## Installation
